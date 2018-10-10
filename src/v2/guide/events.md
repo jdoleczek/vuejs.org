@@ -171,6 +171,7 @@ To address this problem, Vue provides **event modifiers** for `v-on`. Recall tha
 - `.capture`
 - `.self`
 - `.once`
+- `.passive`
 
 ``` html
 <!-- the click event's propagation will be stopped -->
@@ -186,7 +187,7 @@ To address this problem, Vue provides **event modifiers** for `v-on`. Recall tha
 <form v-on:submit.prevent></form>
 
 <!-- use capture mode when adding the event listener -->
-<!-- i.e. an event targeting an inner element is handled here after being handled by that element -->
+<!-- i.e. an event targeting an inner element is handled here before being handled by that element -->
 <div v-on:click.capture="doThis">...</div>
 
 <!-- only trigger handler if event.target is the element itself -->
@@ -194,7 +195,7 @@ To address this problem, Vue provides **event modifiers** for `v-on`. Recall tha
 <div v-on:click.self="doThat">...</div>
 ```
 
-<p class="tip">Order matters when using modifiers because the relevant code is generated in the same order. Therefore using `@click.prevent.self` will prevent **all clicks** while `@click.self.prevent` will only prevent clicks on the element itself.</p>
+<p class="tip">Order matters when using modifiers because the relevant code is generated in the same order. Therefore using `v-on:click.prevent.self` will prevent **all clicks** while `v-on:click.self.prevent` will only prevent clicks on the element itself.</p>
 
 > New in 2.1.4+
 
@@ -203,7 +204,7 @@ To address this problem, Vue provides **event modifiers** for `v-on`. Recall tha
 <a v-on:click.once="doThis"></a>
 ```
 
-Unlike the other modifiers, which are exclusive to native DOM events, the `.once` modifier can also be used on [component events](components.html#Using-v-on-with-Custom-Events). If you haven't read about components yet, don't worry about this for now.
+Unlike the other modifiers, which are exclusive to native DOM events, the `.once` modifier can also be used on [component events](components-custom-events.html). If you haven't read about components yet, don't worry about this for now.
 
 > New in 2.3.0+
 
@@ -295,7 +296,7 @@ For example:
 <div @click.ctrl="doSomething">Do something</div>
 ```
 
-<p class="tip">Note that modifier keys are different from regular keys and when used with `keyup` events, they have to be pressed when the event is emitted. In other words, `keyup.ctrl` will only trigger if you release a key while holding down `ctrl`. It won't trigger if you release the `ctrl` key alone.</p>
+<p class="tip">Note that modifier keys are different from regular keys and when used with `keyup` events, they have to be pressed when the event is emitted. In other words, `keyup.ctrl` will only trigger if you release a key while holding down `ctrl`. It won't trigger if you release the `ctrl` key alone. If you do want such behaviour, use the `keyCode` for `ctrl` instead: `keyup.17`.</p>
 
 ### `.exact` Modifier
 

@@ -1,4 +1,5 @@
 ---
+title: API
 type: api
 ---
 
@@ -254,7 +255,7 @@ type: api
 
 - **Usage:**
 
-  Set a property on an object. If the object is reactive, ensure the property is created as a reactive property and trigger view updates. This is primarily used to get around the limitation that Vue cannot detect property additions.
+  Adds a property to a reactive object, ensuring the new property is also reactive, so triggers view updates. This must be used to add new properties to reactive objects, as Vue cannot detect normal property additions (e.g. `this.myObject.newProperty = 'hi'`).
 
   <p class="tip">The target object cannot be a Vue instance, or the root data object of a Vue instance.</p>
 
@@ -360,6 +361,8 @@ type: api
 - **Usage:**
 
   Install a Vue.js plugin. If the plugin is an Object, it must expose an `install` method. If it is a function itself, it will be treated as the install method. The install method will be called with Vue as the argument.
+  
+  This method has to be called before calling `new Vue()`
 
   When this method is called on the same plugin multiple times, the plugin will be installed only once.
 
@@ -459,7 +462,11 @@ type: api
   })
   ```
 
-  <p class="tip">Note that __you should not use an arrow function with the `data` property__ (e.g. `data: () => { return { a: this.myProp }}`). The reason is arrow functions bind the parent context, so `this` will not be the Vue instance as you expect and `this.myProp` will be undefined.</p>
+  Note that if you use an arrow function with the `data` property, `this` won't be the component's instance, but you can still access the instance as the function's first argument:
+
+  ```js
+  data: vm => ({ a: vm.myProp })
+  ```
 
 - **See also:** [Reactivity in Depth](../guide/reactivity.html)
 
@@ -532,7 +539,13 @@ type: api
 
   Computed properties to be mixed into the Vue instance. All getters and setters have their `this` context automatically bound to the Vue instance.
 
-  <p class="tip">Note that __you should not use an arrow function to define a computed property__ (e.g. `aDouble: () => this.a * 2`). The reason is arrow functions bind the parent context, so `this` will not be the Vue instance as you expect and `this.a` will be undefined.</p>
+  Note that if you use an arrow function with a computed property, `this` won't be the component's instance, but you can still access the instance as the function's first argument:
+
+  ```js
+  computed: {
+    aDouble: vm => vm.a * 2
+  }
+  ```
 
   Computed properties are cached, and only re-computed on reactive dependency changes. Note that if a certain dependency is out of the instance's scope (i.e. not reactive), the computed property will __not__ be updated.
 
@@ -977,7 +990,7 @@ type: api
 
   Allows declaratively extending another component (could be either a plain options object or a constructor) without having to use `Vue.extend`. This is primarily intended to make it easier to extend between single file components.
 
-  This is similar to `mixins`, the difference being that the component's own options takes higher priority than the source component being extended.
+  This is similar to `mixins`.
 
 - **Example:**
 
@@ -1003,17 +1016,24 @@ type: api
 
   <p class="tip">`provide` and `inject` are primarily provided for advanced plugin / component library use cases. It is NOT recommended to use them in generic application code.</p>
 
-  This pair of options are used together to allow an ancestor component to serve as a dependency injector for its all descendants, regardless of how deep the component hierarchy is, as long as they are in the same parent chain. If you are familiar with React, this is very similar to React's context feature.
+  This pair of options are used together to allow an ancestor component to serve as a dependency injector for all its descendants, regardless of how deep the component hierarchy is, as long as they are in the same parent chain. If you are familiar with React, this is very similar to React's context feature.
 
   The `provide` option should be an object or a function that returns an object. This object contains the properties that are available for injection into its descendants. You can use ES2015 Symbols as keys in this object, but only in environments that natively support `Symbol` and `Reflect.ownKeys`.
 
-  The `inject` options should be either an Array of strings or an object where the keys stand for the local binding name, and the value being the key (string or Symbol) to search for in available injections.
+  The `inject` option should be either:
+  - an array of strings, or
+  - an object where the keys are the local binding name and the value is either:
+    - the key (string or Symbol) to search for in available injections, or
+    - an object where:
+      - the `from` property is the key (string or Symbol) to search for in available injections, and
+      - the `default` property is used as fallback value
 
   > Note: the `provide` and `inject` bindings are NOT reactive. This is intentional. However, if you pass down an observed object, properties on that object do remain reactive.
 
 - **Example:**
 
   ``` js
+  // parent component providing 'foo'
   var Provider = {
     provide: {
       foo: 'bar'
@@ -1021,6 +1041,7 @@ type: api
     // ...
   }
 
+  // child component injecting 'foo'
   var Child = {
     inject: ['foo'],
     created () {
@@ -1389,7 +1410,7 @@ type: api
 
 - **Details:**
 
-  An object that holds child components that have `ref` registered.
+  An object of DOM elements and component instances, registered with [`ref` attributes](#ref).
 
 - **See also:**
   - [Child Component Refs](../guide/components.html#Child-Component-Refs)
@@ -1425,7 +1446,7 @@ type: api
 
 - **Details:**
 
-  Contains parent-scope `v-on` event listeners (without `.native` modifiers). This can be passed down to an inner component via `v-on="$listeners"` - useful when creating higher-order components.
+  Contains parent-scope `v-on` event listeners (without `.native` modifiers). This can be passed down to an inner component via `v-on="$listeners"` - useful when creating transparent wrapper components.
 
 ## Instance Methods / Data
 
@@ -1571,13 +1592,138 @@ type: api
 
   - If both event and callback are given, remove the listener for that specific callback only.
 
-### vm.$emit( event, [...args] )
+### vm.$emit( eventName, [...args] )
 
 - **Arguments:**
-  - `{string} event`
+  - `{string} eventName`
   - `[...args]`
 
   Trigger an event on the current instance. Any additional arguments will be passed into the listener's callback function.
+
+- **Examples:**
+
+  Using `$emit` with only an event name:
+
+  ```js
+  Vue.component('welcome-button', {
+    template: `
+      <button v-on:click="$emit('welcome')">
+        Click me to be welcomed
+      </button>
+    `
+  })
+  ```
+  ```html
+  <div id="emit-example-simple">
+    <welcome-button v-on:welcome="sayHi"></welcome-button>
+  </div>
+  ```
+  ```js
+  new Vue({
+    el: '#emit-example-simple',
+    methods: {
+      sayHi: function () {
+        alert('Hi!')
+      }
+    }
+  })
+  ```
+  {% raw %}
+  <div id="emit-example-simple" class="demo">
+    <welcome-button v-on:welcome="sayHi"></welcome-button>
+  </div>
+  <script>
+    Vue.component('welcome-button', {
+      template: `
+        <button v-on:click="$emit('welcome')">
+          Click me to be welcomed
+        </button>
+      `
+    })
+    new Vue({
+      el: '#emit-example-simple',
+      methods: {
+        sayHi: function () {
+          alert('Hi!')
+        }
+      }
+    })
+  </script>
+  {% endraw %}
+
+  Using `$emit` with additional arguments:
+
+  ```js
+  Vue.component('magic-eight-ball', {
+    data: function () {
+      return {
+        possibleAdvice: ['Yes', 'No', 'Maybe']
+      }
+    },
+    methods: {
+      giveAdvice: function () {
+        var randomAdviceIndex = Math.floor(Math.random() * this.possibleAdvice.length)
+        this.$emit('give-advice', this.possibleAdvice[randomAdviceIndex])
+      }
+    },
+    template: `
+      <button v-on:click="giveAdvice">
+        Click me for advice
+      </button>
+    `
+  })
+  ```
+
+  ```html
+  <div id="emit-example-argument">
+    <magic-eight-ball v-on:give-advice="showAdvice"></magic-eight-ball>
+  </div>
+  ```
+
+  ```js
+  new Vue({
+    el: '#emit-example-argument',
+    methods: {
+      showAdvice: function (advice) {
+        alert(advice)
+      }
+    }
+  })
+  ```
+
+  {% raw %}
+  <div id="emit-example-argument" class="demo">
+    <magic-eight-ball v-on:give-advice="showAdvice"></magic-eight-ball>
+  </div>
+  <script>
+    Vue.component('magic-eight-ball', {
+      data: function () {
+        return {
+          possibleAdvice: ['Yes', 'No', 'Maybe']
+        }
+      },
+      methods: {
+        giveAdvice: function () {
+          var randomAdviceIndex = Math.floor(Math.random() * this.possibleAdvice.length)
+          this.$emit('give-advice', this.possibleAdvice[randomAdviceIndex])
+        }
+      },
+      template: `
+        <button v-on:click="giveAdvice">
+          Click me for advice
+        </button>
+      `
+    })
+    new Vue({
+      el: '#emit-example-argument',
+      methods: {
+        showAdvice: function (advice) {
+          alert(advice)
+        }
+      }
+    })
+  </script>
+  {% endraw %}
 
 ## Instance Methods / Lifecycle
 
@@ -1852,20 +1998,17 @@ type: api
 
   Attaches an event listener to the element. The event type is denoted by the argument. The expression can be a method name, an inline statement, or omitted if there are modifiers present.
 
-  Starting in 2.4.0+, `v-on` also supports binding to an object of event/listener pairs without an argument. Note when using the object syntax, it does not support any modifiers.
-
-  When used on a normal element, it listens to **native DOM events** only. When used on a custom element component, it also listens to **custom events** emitted on that child component.
+  When used on a normal element, it listens to [**native DOM events**](https://developer.mozilla.org/en-US/docs/Web/Events) only. When used on a custom element component, it listens to **custom events** emitted on that child component.
 
   When listening to native DOM events, the method receives the native event as the only argument. If using inline statement, the statement has access to the special `$event` property: `v-on:click="handle('ok', $event)"`.
+
+  Starting in 2.4.0+, `v-on` also supports binding to an object of event/listener pairs without an argument. Note when using the object syntax, it does not support any modifiers.
 
 - **Example:**
 
   ```html
   <!-- method handler -->
   <button v-on:click="doThis"></button>
-
-  <!-- object syntax (2.4.0+) -->
-  <button v-on="{ mousedown: doThis, mouseup: doThat }"></button>
 
   <!-- inline statement -->
   <button v-on:click="doThat('hello', $event)"></button>
@@ -1893,6 +2036,9 @@ type: api
 
   <!-- the click event will be triggered at most once -->
   <button v-on:click.once="doThis"></button>
+
+  <!-- object syntax (2.4.0+) -->
+  <button v-on="{ mousedown: doThis, mouseup: doThat }"></button>
   ```
 
   Listening to custom events on a child component (the handler is called when "my-event" is emitted on the child):
@@ -1996,7 +2142,7 @@ type: api
 
 - **Modifiers:**
   - [`.lazy`](../guide/forms.html#lazy) - listen to `change` events instead of `input`
-  - [`.number`](../guide/forms.html#number) - cast input string to numbers
+  - [`.number`](../guide/forms.html#number) - cast valid input string to numbers
   - [`.trim`](../guide/forms.html#trim) - trim input
 
 - **Usage:**
@@ -2116,8 +2262,8 @@ type: api
   <!-- vm.$refs.p will be the DOM node -->
   <p ref="p">hello</p>
 
-  <!-- vm.$refs.child will be the child comp instance -->
-  <child-comp ref="child"></child-comp>
+  <!-- vm.$refs.child will be the child component instance -->
+  <child-component ref="child"></child-component>
   ```
 
   When used on elements/components with `v-for`, the registered reference will be an Array containing DOM nodes or component instances.
@@ -2160,7 +2306,7 @@ Used to denote a `<template>` element as a scoped slot, which is replaced by [`s
 
 ### is
 
-- **Expects:** `string`
+- **Expects:** `string | Object (component’s options object)`
 
   Used for [dynamic components](../guide/components.html#Dynamic-Components) and to work around [limitations of in-DOM templates](../guide/components.html#DOM-Template-Parsing-Caveats).
 
@@ -2287,11 +2433,11 @@ Used to denote a `<template>` element as a scoped slot, which is replaced by [`s
 
 - **Usage:**
 
-  `<transition-group>` serve as transition effects for **multiple** elements/components. The `<transition-group>` renders a real DOM element. By default it renders a `<span>`, and you can configure what element is should render via the `tag` attribute.
+  `<transition-group>` serve as transition effects for **multiple** elements/components. The `<transition-group>` renders a real DOM element. By default it renders a `<span>`, and you can configure what element it should render via the `tag` attribute.
 
   Note every child in a `<transition-group>` must be **uniquely keyed** for the animations to work properly.
 
-  `<transition-group>` supports moving transitions via CSS transform. When a child's position on screen has changed after an updated, it will get applied a moving CSS class (auto generated from the `name` attribute or configured with the `move-class` attribute). If the CSS `transform` property is "transition-able" when the moving class is applied, the element will be smoothly animated to its destination using the [FLIP technique](https://aerotwist.com/blog/flip-your-animations/).
+  `<transition-group>` supports moving transitions via CSS transform. When a child's position on screen has changed after an update, it will get applied a moving CSS class (auto generated from the `name` attribute or configured with the `move-class` attribute). If the CSS `transform` property is "transition-able" when the moving class is applied, the element will be smoothly animated to its destination using the [FLIP technique](https://aerotwist.com/blog/flip-your-animations/).
 
   ```html
   <transition-group tag="ul" name="slide">

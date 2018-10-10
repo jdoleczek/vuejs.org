@@ -9,7 +9,7 @@
 <div id="hero">
   <div class="inner">
     <div class="left">
-      <img class="hero-logo" src="<%- url_for("/images/logo.png") %>">
+      <img class="hero-logo" src="<%- url_for("/images/logo.png") %>" alt="vue logo">
     </div><div class="right">
       <h2 class="vue">Vue.js</h2>
       <h1>
@@ -29,16 +29,12 @@
 </div>
 
 <div id="special-sponsor">
-  <h3>Special Sponsors</h3>
-  <br>
-  <a href="https://stdlib.com/" target="_blank">
-    <img src="/images/stdlib.png" style="width:140px">
-    <span>Function as a Service Platform and Library</span>
-  </a>
-  <br>
-  <a href="https://www.bitsrc.io/?utm_source=vue&utm_medium=vue&utm_campaign=vue&utm_term=vue&utm_content=vue" target="_blank">
-    <img src="/images/bit.png" style="width:60px;height:60px">
-    <span>The fastest way to share code</span>
+  <h3>Special Sponsor</h3>
+  <% var specialSponsor = theme.special_sponsors[0]; %>
+  <a href="<%- specialSponsor.url %>" target="_blank">
+    <img src="<%- url_for(`/images/${specialSponsor.img}`) %>" style="width:160px" alt="Code.xyz Logo">
+    <br>
+    <span><%- specialSponsor.description %></span>
   </a>
 </div>
 
@@ -68,6 +64,40 @@
 <div id="sponsors">
   <div class="inner">
     <%- partial('partials/sponsors') %>
+  </div>
+</div>
+
+<div id="news">
+  <div class="inner">
+    <h3><label for="member_email">Subscribe to our Weekly Newsletter</label></h3>
+    <form
+      class="newsletter-form"
+      id="revue-form"
+      name="revue-form"
+      target="_blank"
+      action="https://www.getrevue.co/profile/vuenewsletter/add_subscriber"
+      method="post"
+      @submit="subscribe"
+    >
+      <input
+        class="newsletter-input"
+        type="email"
+        name="member[email]"
+        id="member_email"
+        required
+        placeholder="Email address"
+      >
+      <input
+        class="button newsletter-button"
+        type="submit"
+        value="Subscribe"
+        name="member[subscribe]"
+        id="member_submit"
+      >
+    </form>
+    <p>
+      You can read the previous issues and listen to our podcast at <a href="https://news.vuejs.org" target="_blank">news.vuejs.org</a>.
+    </p>
   </div>
 </div>
 
