@@ -1,23 +1,23 @@
 # vuejs.org
 
-This site is built with [hexo](http://hexo.io/). Site content is written in Markdown format located in `src`. Pull requests welcome!
+Ta strona jest zbudowana przy użyciu [hexo](http://hexo.io/). Treść strony jest napisana w formacie Markdown umieszczonym w katalogu `src`. Pull requesty mile widziane!
 
-## Developing
+## Rozwijanie dokumentacji
 
 ``` bash
 $ npm install
-$ npm start # dev server at http://localhost:4000
+$ npm start # podgląd wersji developerskiej pod adresem http://localhost:4000
 ```
 
-## Deploying
+## Wydawanie zmian
 
-The site is automatically deployed when commits land in `master`, via [Netlify](https://www.netlify.com/).
+Ta dokumentacja jest wydawana automatycznie jak tylko zimany zostana dostarczone do gałęzi `master`, poprzez [Netlify](https://www.netlify.com/).
 
 If you are the maintainer of a community translation fork and would like to deploy via Netlify instead of GitHub pages, please ping @yyx990803 in an issue to request a Netlify team membership and DNS update.
 
-## On Translations
+## O tłumaczeniach
 
-Translation for this documentation project are currently maintained in separate repositories forked from this original one.
+Tłumaczenia tej dokumentacji dla poszczególnych języków jest trzymana w osobnych repozytoriach bazujących na odgałęzieniu z anglojęzycznj dokumentacji.
 
 ### French
 
